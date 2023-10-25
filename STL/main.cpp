@@ -29,11 +29,18 @@ void main()
 #ifdef STL_VECTOR
 	// vector - это контейнер, который хранит данные в виде динамического массива
 	std::vector<int> vec = { 0, 1, 1, 2, 3, 5, 8, 13, 21, 34 };
-	for (int i = 0; i < vec.size(); i++)
+	try
 	{
-		cout << vec[i] << tab;
+		for (int i = 0; i < vec.size() * 2; i++)
+		{
+			cout << vec.at(i) << tab;
+		}
+		cout << endl;
 	}
-	cout << endl;
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << endl;
+	}
 	vector_properties(vec);
 	vec.push_back(55);
 	vector_properties(vec);
