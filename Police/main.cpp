@@ -1,7 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include<iostream>
 #include<fstream>
-#include<fstream>
 #include<string>
 #include<ctime>
 #include<list>
@@ -239,10 +238,19 @@ std::map<LicencePlate, std::list<Crime>> load(const std::string& filename)
 		while (!fin.eof())
 		{
 			LicencePlate plate;
+			Crime crime;
 			getline(fin, plate, ':');
 			std::string all_crimes;
 			std::getline(fin, all_crimes);
 			cout << plate << tab << all_crimes << endl;
+			char* all_crimes_buffer = new char[all_crimes.size()] {};
+			strcpy(all_crimes_buffer, all_crimes.c_str());
+			char delimiters[] = ":,;";
+			for (char* pch = strtok(all_crimes_buffer, delimiters); pch; pch = strtok(NULL, delimiters))
+			{
+				crime.set_time(atoi(pch));
+
+			}
 		}
 		fin.close();
 	}
