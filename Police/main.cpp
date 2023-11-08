@@ -1,6 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
+#include <Windows.h>
 #include<iostream>
 #include<fstream>
+#include<conio.h>
 #include<string>
 #include<ctime>
 #include<list>
@@ -12,6 +14,8 @@ using std::endl;
 
 #define tab "\t"
 #define delimiter "\n---------------------------------------------------\n"
+
+#define Escape 27
 
 const std::map<int, std::string> VIOLATIONS =
 {
@@ -111,6 +115,12 @@ public:
 		set_place(place);
 		set_time(time.c_str());
 	}
+	Crime(int id, const std::string& place, const std::time_t& time)
+	{
+		set_id(id);
+		set_place(place);
+		set_time(time);
+	}
 	~Crime() {}
 };
 std::ostream& operator<<(std::ostream& os, const Crime& obj)
@@ -157,7 +167,13 @@ public:
 	}
 
 };
-
+std::istream& operator>>(std::istream& is, LicencePlate& obj)
+{
+	std::string plate;
+	is >> plate;
+	obj.set_plate(plate);
+	return is;
+}
 std::ostream& operator<<(std::ostream& os, const LicencePlate& obj)
 {
 	return os << obj.get_plate();
@@ -171,6 +187,8 @@ std::ifstream& getline(std::ifstream& ifs, LicencePlate& obj, char delim)
 }
 
 void print(const std::map<LicencePlate, std::list<Crime>>& base);
+void print(const std::map<LicencePlate, std::list<Crime>>& base, const LicencePlate plate);
+void print(const std::map<LicencePlate, std::list<Crime>>& base, const LicencePlate start_plate, const LicencePlate end_plate);
 void save(const std::map<LicencePlate, std::list<Crime>>& base, const std::string& filename);
 std::map<LicencePlate, std::list<Crime>> load(const std::string& filename);
 
@@ -197,11 +215,101 @@ void main()
 	print(base);
 	save(base, "base.txt");*/
 	std::map<LicencePlate, std::list<Crime>> base = load("base.txt");
+	print(base);
+
+	/*LicencePlate plate;
+	cout << "Введите номер: "; cin >> plate;
+	print(base, plate);*/
+
+	/*LicencePlate start_plate, end_plate;
+	cout << "Введите начальный номер: "; cin >> start_plate;
+	cout << "Введите конечный номер: "; cin >> end_plate;
+	print(base, start_plate, end_plate);*/
+
+	char key;
+	do {
+		cout << "1. Вывод всей базы;" << endl;
+		cout << "2. Вывод информации по номеру;" << endl;
+		cout << "3. Вывод информации по диапазону номеров;" << endl;
+		cout << "4. Добавить нарушение;" << endl;
+		cout << "5. Загрузить базу из файла;" << endl;
+		cout << "6. Сохранить базу в файл;" << endl;
+		key = _getch();
+		switch (key)
+		{
+		case '1': print(base); break;
+		case '2':
+		{
+			LicencePlate plate;
+			cout << "Введите номер: "; cin >> plate;
+			print(base, plate);
+		}
+			break;
+		case '3':
+		{
+			LicencePlate start_plate, end_plate;
+			cout << "Введите начальный номер: "; cin >> start_plate;
+			cout << "Введите конечный номер: "; cin >> end_plate;
+			print(base, start_plate, end_plate);
+		}
+			break;
+		case '4':
+		{
+			LicencePlate plate;
+			std::string place;
+			int id;
+			cout << "Введите номер: "; cin >> plate;
+			cout << "Введите место происшествия: ";
+			cin.clear();
+			cin.ignore();
+			SetConsoleCP(1251);
+			std::getline(cin, place);
+			SetConsoleCP(866);
+			cout << "Выберите нарушение:\n";
+			for (std::pair<int, std::string> i : VIOLATIONS)cout << i.first << ". " << i.second << endl;
+			cin >> id;
+			Crime crime(id, place, time(NULL));
+			base[plate].push_back(crime);
+		}
+		}
+	} while (key != Escape);
+
+	//system("PAUSE");
+	//system("CLS");
+	//main();
 }
 
 void print(const std::map<LicencePlate, std::list<Crime>>& base)
 {
+	cout << "Base size: " << base.size() << endl;
 	for (std::map<LicencePlate, std::list<Crime>>::const_iterator bit = base.begin(); bit != base.end(); ++bit)
+	{
+		cout << bit->first << ":\n";
+		for (std::list<Crime>::const_iterator it = bit->second.begin(); it != bit->second.end(); ++it)
+		{
+			cout << tab << *it << ";\n";
+		}
+		cout << endl;
+	}
+}
+void print(const std::map<LicencePlate, std::list<Crime>>& base, LicencePlate plate)
+{
+	try
+	{
+		cout << "Plate: " << plate << " violations:\n";
+		for (std::list<Crime>::const_iterator it = base.at(plate).begin(); it != base.at(plate).end(); ++it)
+		{
+			cout << tab << *it << ";\n";
+		}
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "В базе нет такого номера :-(" << endl;
+	}
+}
+void print(const std::map<LicencePlate, std::list<Crime>>& base, const LicencePlate start_plate, const LicencePlate end_plate)
+{
+	for (std::map<LicencePlate, std::list<Crime>>::const_iterator bit = base.lower_bound(start_plate); bit != base.upper_bound(end_plate); ++bit)
 	{
 		cout << bit->first << ":\n";
 		for (std::list<Crime>::const_iterator it = bit->second.begin(); it != bit->second.end(); ++it)
@@ -238,19 +346,25 @@ std::map<LicencePlate, std::list<Crime>> load(const std::string& filename)
 		while (!fin.eof())
 		{
 			LicencePlate plate;
-			Crime crime;
 			getline(fin, plate, ':');
 			std::string all_crimes;
 			std::getline(fin, all_crimes);
-			cout << plate << tab << all_crimes << endl;
-			char* all_crimes_buffer = new char[all_crimes.size()] {};
+			//cout << plate << tab << all_crimes << endl;
+			char* all_crimes_buffer = new char[all_crimes.size() + 1] {};
 			strcpy(all_crimes_buffer, all_crimes.c_str());
 			char delimiters[] = ":,;";
 			for (char* pch = strtok(all_crimes_buffer, delimiters); pch; pch = strtok(NULL, delimiters))
 			{
+				Crime crime;
 				crime.set_time(atoi(pch));
-
+				crime.set_id(atoi(strrchr(pch, ' ') + 1));
+				while (pch[0] == ' ') pch = strchr(pch, ' ') + 1;
+				pch = strchr(pch, ' ') + 1;
+				*strrchr(pch, ' ') = 0;
+				crime.set_place(pch);
+				base[plate].push_back(crime);
 			}
+			delete[] all_crimes_buffer;
 		}
 		fin.close();
 	}
