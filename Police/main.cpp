@@ -228,6 +228,7 @@ void main()
 
 	char key;
 	do {
+		system("CLS");
 		cout << "1. Вывод всей базы;" << endl;
 		cout << "2. Вывод информации по номеру;" << endl;
 		cout << "3. Вывод информации по диапазону номеров;" << endl;
@@ -270,8 +271,11 @@ void main()
 			cin >> id;
 			Crime crime(id, place, time(NULL));
 			base[plate].push_back(crime);
+			cout << plate << ":\n";
+			for (Crime i : base[plate])cout << i << ";\n";
 		}
 		}
+		system("PAUSE");
 	} while (key != Escape);
 
 	//system("PAUSE");
